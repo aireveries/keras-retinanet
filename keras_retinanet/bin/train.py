@@ -379,7 +379,7 @@ def parse_args(args):
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
     csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
-    csv_parser.add_argument('--val-annotations', help='Path to CSV file containing annotations for validation (optional).')
+    csv_parser.add_argument('--val-annotations', dest="val_annotations", help='Path to CSV file containing annotations for validation (optional).')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--snapshot',          help='Resume training from a snapshot.')
@@ -475,15 +475,23 @@ def main(args=None):
         args,
     )
 
-    # start training
-    training_model.fit_generator(
-        generator=train_generator,
-        steps_per_epoch=args.steps,
-        epochs=args.epochs,
-        verbose=1,
-        callbacks=callbacks,
-    )
-
+    #train
+    if args.val_annotations is not None:
+        training_model.fit_generator(
+            generator=train_generator,
+            validation_data=validation_generator,
+            validation_steps= int(round(validation_generator.size()/args.batch_size)),
+            steps_per_epoch=args.steps,
+            epochs=args.epochs,
+            verbose=1,
+            callbacks=callbacks)
+    else:
+        training_model.fit_generator(
+            generator=train_generator,
+            steps_per_epoch=args.steps,
+            epochs=args.epochs,
+            verbose=1,
+            callbacks=callbacks)
 
 if __name__ == '__main__':
     main()
